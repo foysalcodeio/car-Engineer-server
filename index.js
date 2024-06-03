@@ -16,7 +16,7 @@ const port = process.env.PORT || 5000;
 //middleware & jwt
 app.use(cors({
   origin: ['http://localhost:5173'],
-  credentials: true
+  credentials: true //that means set cookie
 }))
 
 app.use(express.json())
@@ -34,6 +34,13 @@ const client = new MongoClient(uri, {
   }
 });
 
+
+//own create middleware
+const logger = async(req, res, next) => {
+  console.log('called', req.host, req.originalUrl)
+  next();
+}
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -45,7 +52,7 @@ async function run() {
 
 
     //AUTH RELATED API
-    app.post('/jwt', async(req, res) => {
+    app.post('/jwt', logger, async(req, res) => {
       const userPayload = req.body;
       console.log(userPayload)
       const token = jwt.sign(userPayload, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1h'})
@@ -62,7 +69,7 @@ async function run() {
 
     //SERVICE RELATED API
 
-    app.get('/services', async(req, res) => {
+    app.get('/services', logger, async(req, res) => {
         const cursor = serviceCollection.find()
         const result = await cursor.toArray();
         res.send(result)
@@ -84,7 +91,7 @@ async function run() {
 
     // ------------------------------------ BOOKINGS --------------------------------------------------------------------
     // read not all not specific one means some data
-    app.get('/bookings', async(req, res) => {
+    app.get('/bookings', logger, async(req, res) => {
       console.log(req.query.email)
       console.log('tok tok tok cookies', req.cookies.token)
 

@@ -28,6 +28,4 @@
   credentials: true
 }))
  * 
- * 
- * 3. client side axios setting
  */
