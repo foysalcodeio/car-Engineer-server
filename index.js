@@ -37,8 +37,29 @@ const client = new MongoClient(uri, {
 
 //own create middleware
 const logger = async(req, res, next) => {
-  console.log('called', req.host, req.originalUrl)
+  console.log('called:', req.host, req.originalUrl)
   next();
+}
+
+const verifyToken = async(req, res, next) => {
+  const token = req.cookies?.token;
+  console.log('value of token in middleware', token)
+  if(!token){
+    return res.status(401).send({message: 'not authorized'})
+  }
+  //verify - token expire or not
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    //error
+    if(err){
+      console.log(err)
+      return res.status(401).send({message: 'unauthorized'})
+    }
+    //if token is valid then it would be decoded
+    console.log('value in the token', decoded)
+    req.user = decoded
+    next()
+  })
+  
 }
 
 async function run() {
@@ -91,10 +112,10 @@ async function run() {
 
     // ------------------------------------ BOOKINGS --------------------------------------------------------------------
     // read not all not specific one means some data
-    app.get('/bookings', logger, async(req, res) => {
+    app.get('/bookings', logger, verifyToken, async(req, res) => {
       console.log(req.query.email)
-      console.log('tok tok tok cookies', req.cookies.token)
-
+      // console.log('tok tok tok cookies', req.cookies.token)
+      console.log('from valid token & its use booking block', req.user)
       // need specific data
       let query = {};
       if(req.query?.email){
